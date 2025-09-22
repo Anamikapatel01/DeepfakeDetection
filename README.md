@@ -75,5 +75,4 @@ This will launch a local Gradio interface and print a local URL (and optionally 
 - `grad-cam` for visualization utilities
 - Gradio for the web UI
 
-### License
-Apache-2.0 (see `LICENSE` if provided). If this repository lacks a license file, consider adding one to define usage terms clearly.
+
