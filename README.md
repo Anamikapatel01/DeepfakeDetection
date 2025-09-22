@@ -1,13 +1,79 @@
----
-title: Deepfake Detection
-emoji: 📚
-colorFrom: red
-colorTo: indigo
-sdk: gradio
-sdk_version: 3.14.0
-app_file: app.py
-pinned: false
-license: apache-2.0
----
+## Deepfake Detection (Gradio App)
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+A simple Gradio application for detecting deepfakes in face images, providing class probabilities (real vs fake), Grad-CAM explainability overlays, and basic evaluation plots (confusion matrix and ROC curve) generated from bundled examples.
+
+### Features
+- **Face detection** using `MTCNN` from `facenet-pytorch`.
+- **Classifier** based on `InceptionResnetV1` fine-tuned for binary output.
+- **Explainability** via Grad-CAM heatmaps over the detected face.
+- **Evaluation artifacts**: confusion matrix and ROC curve built from sample images.
+- **Interactive UI** using Gradio.
+
+### Repository structure
+- `app.py`: Gradio app and inference/evaluation logic
+- `requirements.txt`: Python dependencies
+- `resnetinceptionv1_epoch_32.pth`: trained model checkpoint
+- `examples/`: sample images (some real and fake frames)
+- `confusion_matrix.png`, `roc_curve.png`: generated on startup/evaluation
+
+### Requirements
+- Python 3.8+
+- A working PyTorch installation (CPU works; CUDA is used if available)
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Note: If you need GPU support, install the CUDA-enabled version of PyTorch per the official instructions before running the app.
+
+### Running the app
+```bash
+python app.py
+```
+This will launch a local Gradio interface and print a local URL (and optionally a public share URL) to your console.
+
+### Usage
+1. Open the Gradio URL shown in the terminal.
+2. Upload a face image (or pick from the preloaded examples).
+3. The app will:
+   - Detect the largest face using MTCNN
+   - Classify the face as real or fake (with confidence scores)
+   - Render a Grad-CAM overlay highlighting influential regions
+   - Display the confusion matrix and ROC curve images generated from sample data
+
+### Notes about examples and startup
+- On startup, the app evaluates the model on a small set of bundled images in `examples/` and saves `confusion_matrix.png` and `roc_curve.png`.
+- The current code expects an `examples.zip` at the repo root and attempts to unzip it. If you already have an `examples/` folder (as in this repo), you can:
+  - Provide `examples.zip` yourself, or
+  - Comment out or remove the unzip block in `app.py`:
+    ```python
+    # with zipfile.ZipFile("examples.zip", "r") as zip_ref:
+    #     zip_ref.extractall(".")
+    ```
+
+### Model details and thresholds
+- Backbone: `InceptionResnetV1` (`facenet-pytorch`, pretrained on `vggface2`), adapted for binary classification with a single logit.
+- Output is passed through a sigmoid; the app currently uses a decision threshold of 0.7, mapping to:
+  - score > 0.7 → real
+  - score ≤ 0.7 → fake
+  You can adjust this threshold in `app.py` to tune precision/recall.
+
+### Known limitations
+- The example-driven evaluation (confusion matrix and ROC) is based on a tiny, bundled set and is not representative of real-world performance.
+- Face detection failures (no detectable face) will raise an error for that input.
+- The model file `resnetinceptionv1_epoch_32.pth` must be present at the repo root.
+
+### Troubleshooting
+- "No face detected": Ensure the uploaded image contains a clear, frontal face; try higher-resolution images.
+- CUDA-related errors: Ensure your PyTorch installation matches your CUDA toolkit, or run on CPU by uninstalling CUDA-enabled PyTorch.
+- Missing examples on startup: Either add `examples.zip` or comment out the unzip step as noted above.
+- Port conflicts: If Gradio fails to launch, specify a port, e.g. `gradio.Interface(...).launch(server_port=7861)`.
+
+### Acknowledgments
+- `facenet-pytorch` for MTCNN and InceptionResnetV1
+- `grad-cam` for visualization utilities
+- Gradio for the web UI
+
+### License
+Apache-2.0 (see `LICENSE` if provided). If this repository lacks a license file, consider adding one to define usage terms clearly.
